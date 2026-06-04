@@ -15,4 +15,9 @@ public interface UserConstant {
      * 管理员角色
      */
     String ADMIN_ROLE = "admin";
+
+    /**
+     * 普通用户默认配额
+     */
+    int DEFAULT_QUOTA = 5;
 }

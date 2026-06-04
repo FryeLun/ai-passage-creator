@@ -1,6 +1,8 @@
 spring:
   application:
     name: ai-passage-creator
+  profiles:
+    active: local
   # MySQL ?????
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver

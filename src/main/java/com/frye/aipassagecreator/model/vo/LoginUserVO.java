@@ -15,6 +15,10 @@ public class LoginUserVO implements Serializable {
     private String userRole;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    /**
+     * 剩余配额
+     */
+    private Integer quota;
 
     private static final long serialVersionUID = 1L;
 }
