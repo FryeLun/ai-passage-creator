@@ -34,7 +34,12 @@ public enum ImageMethodEnum {
     /**
      * Iconify 图标库检索
      */
-    ICONIFY("ICONIFY", "Iconify 图标库", false, false);
+    ICONIFY("ICONIFY", "Iconify 图标库", false, false),
+
+    /**
+     * 表情包检索（Bing 图片搜索）
+     */
+    EMOJI_PACK("EMOJI_PACK", "表情包检索", false, false);
 
     /**
      * 方法值
