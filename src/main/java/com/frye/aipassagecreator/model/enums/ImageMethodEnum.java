@@ -29,7 +29,12 @@ public enum ImageMethodEnum {
     /**
      * Mermaid 流程图生成
      */
-    MERMAID("MERMAID", "Mermaid 流程图生成", true, false);
+    MERMAID("MERMAID", "Mermaid 流程图生成", true, false),
+
+    /**
+     * Iconify 图标库检索
+     */
+    ICONIFY("ICONIFY", "Iconify 图标库", false, false);
 
     /**
      * 方法值
