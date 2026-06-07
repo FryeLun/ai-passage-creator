@@ -39,7 +39,12 @@ public enum ImageMethodEnum {
     /**
      * 表情包检索（Bing 图片搜索）
      */
-    EMOJI_PACK("EMOJI_PACK", "表情包检索", false, false);
+    EMOJI_PACK("EMOJI_PACK", "表情包检索", false, false),
+
+    /**
+     * SVG 概念示意图生成（AI 生成 SVG 代码）
+     */
+    SVG_DIAGRAM("SVG_DIAGRAM", "SVG 概念示意图", true, false);
 
     /**
      * 方法值
