@@ -1,6 +1,7 @@
 package com.frye.aipassagecreator.service;
 
 
+import com.frye.aipassagecreator.model.dto.image.ImageData;
 import com.frye.aipassagecreator.model.dto.image.ImageRequest;
 import com.frye.aipassagecreator.model.enums.ImageMethodEnum;
 
@@ -25,6 +26,19 @@ public interface ImageSearchService {
         // 默认实现：根据服务类型选择合适的参数
         String param = request.getEffectiveParam(getMethod().isAiGenerated());
         return searchImage(param);
+    }
+
+    /**
+     * 获取图片数据（用于统一上传到 COS）
+     * 子类可重写此方法返回更高效的数据格式（如字节数据）
+     *
+     * @param request 图片请求对象
+     * @return ImageData 对象，包含图片字节或 URL
+     */
+    default ImageData getImageData(ImageRequest request) {
+        // 默认实现：通过 getImage 获取 URL，然后转换为 ImageData
+        String url = getImage(request);
+        return ImageData.fromUrl(url);
     }
 
     /**

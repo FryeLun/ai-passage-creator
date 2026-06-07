@@ -9,6 +9,7 @@ import com.frye.aipassagecreator.manager.SseEmitterManager;
 import com.frye.aipassagecreator.model.dto.article.ArticleCreateRequest;
 import com.frye.aipassagecreator.model.dto.article.ArticleQueryRequest;
 import com.frye.aipassagecreator.model.entity.User;
+import com.frye.aipassagecreator.model.enums.ArticleStyleEnum;
 import com.frye.aipassagecreator.model.vo.ArticleVO;
 import com.frye.aipassagecreator.service.ArticleAsyncService;
 import com.frye.aipassagecreator.service.ArticleService;
@@ -51,14 +52,22 @@ public class ArticleController {
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
         ThrowUtils.throwIf(request.getTopic() == null || request.getTopic().trim().isEmpty(), 
                 ErrorCode.PARAMS_ERROR, "选题不能为空");
+        // 校验风格参数（允许为空）
+        ThrowUtils.throwIf(!ArticleStyleEnum.isValid(request.getStyle()),
+                ErrorCode.PARAMS_ERROR, "无效的文章风格");
 
         User loginUser = userService.getLoginUser(httpServletRequest);
 
         // 检查并消耗配额 + 创建文章任务（在同一事务中）
-        String taskId = articleService.createArticleTaskWithQuotaCheck(request.getTopic(), loginUser);
+        String taskId = articleService.createArticleTaskWithQuotaCheck(request.getTopic(), request.getStyle(), loginUser);
 
-        // 异步执行文章生成
-        articleAsyncService.executeArticleGeneration(taskId, request.getTopic());
+        // 异步执行文章生成（传递风格和配图方式选择）
+        articleAsyncService.executeArticleGeneration(
+                taskId,
+                request.getTopic(),
+                request.getStyle(),
+                request.getEnabledImageMethods()
+        );
 
         return ResultUtils.success(taskId);
     }

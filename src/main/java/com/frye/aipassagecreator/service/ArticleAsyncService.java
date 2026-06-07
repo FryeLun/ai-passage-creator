@@ -32,49 +32,53 @@ public class ArticleAsyncService {
     /**
      * 异步执行文章生成
      *
-     * @param taskId 任务ID
-     * @param topic  选题
+     * @param taskId              任务ID
+     * @param topic               选题
+     * @param style               文章风格（可为空）
+     * @param enabledImageMethods 允许的配图方式列表（为空表示支持所有方式）
      */
     @Async("articleExecutor")
-    public void executeArticleGeneration(String taskId, String topic) {
-        log.info("异步任务开始, taskId={}, topic={}", taskId, topic);
-        
+    public void executeArticleGeneration(String taskId, String topic, String style, java.util.List<String> enabledImageMethods) {
+        log.info("异步任务开始, taskId={}, topic={}, style={}, enabledImageMethods={}", taskId, topic, style, enabledImageMethods);
+
         try {
             // 更新状态为处理中
             articleService.updateArticleStatus(taskId, ArticleStatusEnum.PROCESSING, null);
-            
+
             // 创建状态对象
             ArticleState state = new ArticleState();
             state.setTaskId(taskId);
             state.setTopic(topic);
-            
+            state.setStyle(style);
+            state.setEnabledImageMethods(enabledImageMethods);
+
             // 执行智能体编排,并通过 SSE 推送进度
             articleAgentService.executeArticleGeneration(state, message -> {
                 handleAgentMessage(taskId, message, state);
             });
-            
+
             // 保存完整文章到数据库
             articleService.saveArticleContent(taskId, state);
-            
+
             // 更新状态为已完成
             articleService.updateArticleStatus(taskId, ArticleStatusEnum.COMPLETED, null);
-            
+
             // 推送完成消息
             sendSseMessage(taskId, SseMessageTypeEnum.ALL_COMPLETE, Map.of("taskId", taskId));
-            
+
             // 完成 SSE 连接
             sseEmitterManager.complete(taskId);
-            
+
             log.info("异步任务完成, taskId={}", taskId);
         } catch (Exception e) {
             log.error("异步任务失败, taskId={}", taskId, e);
-            
+
             // 更新状态为失败
             articleService.updateArticleStatus(taskId, ArticleStatusEnum.FAILED, e.getMessage());
-            
+
             // 推送错误消息
             sendSseMessage(taskId, SseMessageTypeEnum.ERROR, Map.of("message", e.getMessage()));
-            
+
             // 完成 SSE 连接
             sseEmitterManager.complete(taskId);
         }
@@ -92,7 +96,7 @@ public class ArticleAsyncService {
 
     /**
      * 构建消息数据
-     * 
+     *
      * @param message 原始消息
      * @param state   文章状态
      * @return 消息数据，如果消息无效返回 null
@@ -102,20 +106,20 @@ public class ArticleAsyncService {
         String streamingPrefix2 = SseMessageTypeEnum.AGENT2_STREAMING.getStreamingPrefix();
         String streamingPrefix3 = SseMessageTypeEnum.AGENT3_STREAMING.getStreamingPrefix();
         String imageCompletePrefix = SseMessageTypeEnum.IMAGE_COMPLETE.getStreamingPrefix();
-        
+
         if (message.startsWith(streamingPrefix2)) {
             return buildStreamingData(SseMessageTypeEnum.AGENT2_STREAMING, message.substring(streamingPrefix2.length()));
         }
-        
+
         if (message.startsWith(streamingPrefix3)) {
             return buildStreamingData(SseMessageTypeEnum.AGENT3_STREAMING, message.substring(streamingPrefix3.length()));
         }
-        
+
         if (message.startsWith(imageCompletePrefix)) {
             String imageJson = message.substring(imageCompletePrefix.length());
             return buildImageCompleteData(imageJson);
         }
-        
+
         // 处理完成消息（枚举值）
         return buildCompleteMessageData(message, state);
     }
@@ -145,7 +149,7 @@ public class ArticleAsyncService {
      */
     private Map<String, Object> buildCompleteMessageData(String message, ArticleState state) {
         Map<String, Object> data = new HashMap<>();
-        
+
         // 使用枚举值匹配
         if (SseMessageTypeEnum.AGENT1_COMPLETE.getValue().equals(message)) {
             data.put("type", SseMessageTypeEnum.AGENT1_COMPLETE.getValue());
@@ -167,7 +171,7 @@ public class ArticleAsyncService {
         } else {
             return null;
         }
-        
+
         return data;
     }
 
