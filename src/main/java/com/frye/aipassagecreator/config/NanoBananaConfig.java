@@ -18,11 +18,16 @@ public class NanoBananaConfig {
     private String apiKey;
 
     /**
+     * 中转站地址
+     */
+    private String baseUrl;
+
+    /**
      * 模型名称
      * gemini-2.5-flash-image: 速度快，适合高吞吐低延迟
      * gemini-3-pro-image-preview: 专业级，支持高级推理和高分辨率
      */
-    private String model = "gemini-3-pro-image-preview";
+    private String model = "gemini-2.5-flash-image";
 
     /**
      * 图片宽高比

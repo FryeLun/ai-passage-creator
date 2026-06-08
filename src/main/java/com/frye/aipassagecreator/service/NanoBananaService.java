@@ -5,10 +5,7 @@ import com.frye.aipassagecreator.model.dto.image.ImageData;
 import com.frye.aipassagecreator.model.dto.image.ImageRequest;
 import com.frye.aipassagecreator.model.enums.ImageMethodEnum;
 import com.google.genai.Client;
-import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.ImageConfig;
-import com.google.genai.types.Part;
+import com.google.genai.types.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +47,9 @@ public class NanoBananaService implements ImageSearchService {
             // 使用 Builder 显式设置 API Key
             Client genaiClient = Client.builder()
                     .apiKey(nanoBananaConfig.getApiKey())
+                    .httpOptions(
+                            HttpOptions.builder().baseUrl(nanoBananaConfig.getBaseUrl()).build()
+                    )
                     .build();
 
             try {
