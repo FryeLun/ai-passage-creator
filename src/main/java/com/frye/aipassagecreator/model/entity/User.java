@@ -39,10 +39,17 @@ public class User implements Serializable {
     private LocalDateTime editTime;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+
     /**
      * 剩余配额
      */
     private Integer quota;
+
+    /**
+     * 成为会员时间
+     */
+    private LocalDateTime vipTime;
+
     /**
      * 逻辑删除
      */
