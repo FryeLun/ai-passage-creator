@@ -9,7 +9,9 @@ import com.frye.aipassagecreator.manager.SseEmitterManager;
 import com.frye.aipassagecreator.model.dto.article.*;
 import com.frye.aipassagecreator.model.entity.User;
 import com.frye.aipassagecreator.model.enums.ArticleStyleEnum;
+import com.frye.aipassagecreator.model.vo.AgentExecutionStats;
 import com.frye.aipassagecreator.model.vo.ArticleVO;
+import com.frye.aipassagecreator.service.AgentLogService;
 import com.frye.aipassagecreator.service.ArticleAsyncService;
 import com.frye.aipassagecreator.service.ArticleService;
 import com.frye.aipassagecreator.service.UserService;
@@ -44,6 +46,9 @@ public class ArticleController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AgentLogService agentLogService;
 
     /**
      * 创建文章任务
@@ -222,4 +227,18 @@ public class ArticleController {
 
         return ResultUtils.success(modifiedOutline);
     }
+
+    /**
+     * 获取任务执行日志
+     */
+    @GetMapping("/execution-logs/{taskId}")
+    @Operation(summary = "获取任务执行日志")
+    public BaseResponse<AgentExecutionStats> getExecutionLogs(@PathVariable String taskId) {
+        ThrowUtils.throwIf(taskId == null || taskId.trim().isEmpty(),
+                ErrorCode.PARAMS_ERROR, "任务ID不能为空");
+
+        AgentExecutionStats stats = agentLogService.getExecutionStats(taskId);
+        return ResultUtils.success(stats);
+    }
+
 }
