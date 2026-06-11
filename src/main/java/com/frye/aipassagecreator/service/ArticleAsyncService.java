@@ -1,5 +1,7 @@
 package com.frye.aipassagecreator.service;
 
+import com.frye.aipassagecreator.agent.ArticleAgentOrchestrator;
+import com.frye.aipassagecreator.agent.config.AgentConfig;
 import com.frye.aipassagecreator.manager.SseEmitterManager;
 import com.frye.aipassagecreator.model.dto.article.ArticleState;
 import com.frye.aipassagecreator.model.entity.Article;
@@ -19,6 +21,10 @@ import java.util.Map;
 
 /**
  * 文章异步任务服务
+ *
+ * 支持两种执行模式：
+ * 1. 多智能体编排模式（通过 article.agent.orchestrator.enabled=true 启用）
+ * 2. 原有模式（默认或 article.agent.orchestrator.enabled=false）
  */
 @Service
 @Slf4j
@@ -26,6 +32,12 @@ public class ArticleAsyncService {
 
     @Resource
     private ArticleAgentService articleAgentService;
+
+    @Resource
+    private ArticleAgentOrchestrator articleAgentOrchestrator;
+
+    @Resource
+    private AgentConfig agentConfig;
 
     @Resource
     private SseEmitterManager sseEmitterManager;
@@ -42,7 +54,9 @@ public class ArticleAsyncService {
      */
     @Async("articleExecutor")
     public void executePhase1(String taskId, String topic, String style) {
-        log.info("阶段1异步任务开始, taskId={}, topic={}, style={}", taskId, topic, style);
+        boolean useOrchestrator = agentConfig.isOrchestratorEnabled();
+        log.info("阶段1异步任务开始, taskId={}, topic={}, style={}, 使用多智能体编排={}",
+                taskId, topic, style, useOrchestrator);
 
         try {
             // 更新状态和阶段
@@ -55,10 +69,16 @@ public class ArticleAsyncService {
             state.setTopic(topic);
             state.setStyle(style);
 
-            // 执行阶段1：生成标题方案
-            articleAgentService.executePhase1_GenerateTitles(state, message -> {
-                handleAgentMessage(taskId, message, state);
-            });
+            // 执行阶段1：生成标题方案（根据配置选择执行方式）
+            if (useOrchestrator) {
+                articleAgentOrchestrator.executePhase1_GenerateTitles(state, message -> {
+                    handleAgentMessage(taskId, message, state);
+                });
+            } else {
+                articleAgentService.executePhase1_GenerateTitles(state, message -> {
+                    handleAgentMessage(taskId, message, state);
+                });
+            }
 
             // 保存标题方案到数据库
             articleService.saveTitleOptions(taskId, state.getTitleOptions());
@@ -93,7 +113,8 @@ public class ArticleAsyncService {
      */
     @Async("articleExecutor")
     public void executePhase2(String taskId) {
-        log.info("阶段2异步任务开始, taskId={}", taskId);
+        boolean useOrchestrator = agentConfig.isOrchestratorEnabled();
+        log.info("阶段2异步任务开始, taskId={}, 使用多智能体编排={}", taskId, useOrchestrator);
 
         try {
             // 获取文章信息
@@ -114,10 +135,16 @@ public class ArticleAsyncService {
             title.setSubTitle(article.getSubTitle());
             state.setTitle(title);
 
-            // 执行阶段2：生成大纲
-            articleAgentService.executePhase2_GenerateOutline(state, message -> {
-                handleAgentMessage(taskId, message, state);
-            });
+            // 执行阶段2：生成大纲（根据配置选择执行方式）
+            if (useOrchestrator) {
+                articleAgentOrchestrator.executePhase2_GenerateOutline(state, message -> {
+                    handleAgentMessage(taskId, message, state);
+                });
+            } else {
+                articleAgentService.executePhase2_GenerateOutline(state, message -> {
+                    handleAgentMessage(taskId, message, state);
+                });
+            }
 
             // 保存大纲到数据库
             Article articleToUpdate = articleService.getByTaskId(taskId);
@@ -154,7 +181,8 @@ public class ArticleAsyncService {
      */
     @Async("articleExecutor")
     public void executePhase3(String taskId) {
-        log.info("阶段3异步任务开始, taskId={}", taskId);
+        boolean useOrchestrator = agentConfig.isOrchestratorEnabled();
+        log.info("阶段3异步任务开始, taskId={}, 使用多智能体编排={}", taskId, useOrchestrator);
 
         try {
             // 获取文章信息
@@ -193,10 +221,17 @@ public class ArticleAsyncService {
             outlineResult.setSections(outlineSections);
             state.setOutline(outlineResult);
 
-            // 执行阶段3：生成正文+配图
-            articleAgentService.executePhase3_GenerateContent(state, message -> {
-                handleAgentMessage(taskId, message, state);
-            });
+            // 执行阶段3：生成正文+配图（根据配置选择执行方式）
+            // 多智能体编排模式支持配图并行生成
+            if (useOrchestrator) {
+                articleAgentOrchestrator.executePhase3_GenerateContent(state, message -> {
+                    handleAgentMessage(taskId, message, state);
+                });
+            } else {
+                articleAgentService.executePhase3_GenerateContent(state, message -> {
+                    handleAgentMessage(taskId, message, state);
+                });
+            }
 
             // 保存完整文章到数据库
             articleService.saveArticleContent(taskId, state);

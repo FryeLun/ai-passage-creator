@@ -3,18 +3,18 @@ spring:
     name: ai-passage-creator
   profiles:
     active: local
-  # MySQL ?????
+  # MySQL 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ai_passage_creator
     username: root
     password: 123456
-  # session ??
+  # session 配置
   session:
     store-type: redis
-    # session 30 ???
+    # session 30 天过期
     timeout: 2592000
-  # Redis ??
+  # Redis 配置
   data:
     redis:
       host: localhost
@@ -25,21 +25,31 @@ server:
   port: 8567
   servlet:
     context-path: /api
-    # cookie 30 ???
+    # cookie 30 天过期
     session:
       cookie:
         max-age: 2592000
 mybatis-flex:
   configuration:
     map-underscore-to-camel-case: false
-# springdoc-openapi ??
+# springdoc-openapi 配置
 springdoc:
   group-configs:
     - group: 'default'
       paths-to-match: '/**'
       packages-to-scan: com.frye.aipassagecreator.controller
-# knife4j ??????
+# knife4j 接口文档配置
 knife4j:
   enable: true
   setting:
     language: zh_cn
+# 文章智能体配置
+article:
+  agent:
+    orchestrator:
+      # 是否启用多智能体编排模式（支持配图并行生成）
+      # true: 使用 Spring AI Alibaba 多智能体编排
+      # false: 使用原有的 ArticleAgentService
+      enabled: true
+    # Agent 最大迭代次数
+    max-iterations: 10
